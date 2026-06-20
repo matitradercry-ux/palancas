@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ Simulador de Palancas Incongelable (Con Cotas d y r)</title>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --panel-bg: #ffffff;
+            --text-dark: #1e293b;
+            --primary: #4f46e5;
+            --potencia: #3b82f6;
+            --resistencia: #ef4444;
+            --fulcro: #10b981;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        header h1 { margin: 0; font-size: 24px; font-weight: 800; }
+        header p { margin: 5px 0 0 0; font-size: 14px; opacity: 0.9; }
+
+        main {
+            max-width: 1100px;
+            width: 100%;
+            margin: 25px auto;
+            padding: 0 20px;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 850px) {
+            main { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);
+            box-sizing: border-box;
+        }
+
+        h2 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #475569;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 8px;
+        }
+
+        .degree-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .degree-btn {
+            flex: 1;
+            padding: 12px;
+            background-color: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .degree-btn.active {
+            background-color: #eef2ff;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .formula-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #64748b;
+        }
+
+        .input-group input, .input-group select {
+            padding: 10px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .canvas-container {
+            text-align: center;
+            background-color: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        canvas {
+            background-color: #fafafa;
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .math-box {
+            background-color: #f0fdf4;
+            border: 2px dashed #bbf7d0;
+            border-radius: 12px;
+            padding: 15px;
+            font-family: monospace;
+            color: #14532d;
+        }
+
+        .math-title {
+            font-weight: bold;
+            font-size: 13px;
+            color: #166534;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .bg-p { background-color: var(--potencia); }
+        .bg-d { background-color: #2563eb; }
+        .bg-r-val { background-color: var(--resistencia); }
+        .bg-r-dist { background-color: #dc2626; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>⚙️ Simulador Seguro de Palancas Mecánicas</h1>
+        <p>Estudio interactivo sin cuelgues ni errores en el aula</p>
+    </header>
+
+    <main>
+        <div class="panel">
+            <h2>🛠️ 1. Configuración de la Palanca</h2>
+            <label style="font-size: 13px; font-weight: bold; color: #475569;">Seleccionar Grado o Género:</label>
+            <div class="degree-selector" style="margin-top: 6px;">
+                <div class="degree-btn active" id="btn-g1" onclick="setGrade(1)">1° Grado<br><small>(Interapoyo)</small></div>
+                <div class="degree-btn" id="btn-g2" onclick="setGrade(2)">2° Grado<br><small>(Interresistencia)</small></div>
+                <div class="degree-btn" id="btn-g3" onclick="setGrade(3)">3° Grado<br><small>(Interpotencia)</small></div>
+            </div>
+
+            <h2>🧮 2. Valores del Sistema (P . d = R . r)</h2>
+            <div style="background-color: #f8fafc; padding: 10px; border-radius: 8px; font-size: 12px; color: #64748b; margin-bottom: 15px; text-align: center; font-weight: bold;">
+                ⚠️ Elegí qué valor querés averiguar dejándolo configurado como "Incógnita (?)"
+            </div>
+
+            <div class="input-area-box">
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>¿Qué dato querés calcular?</label>
+                    <select id="unknown-selector" onchange="handleUnknownChange()">
+                        <option value="P">Potencia (P) - Fuerza que aplicamos</option>
+                        <option value="d">Distancia d - Del fulcro a la Potencia</option>
+                        <option value="R">Resistencia (R) - Carga o peso a mover</option>
+                        <option value="r" selected>Distancia r - Del fulcro a la Resistencia</option>
+                    </select>
+                </div>
+
+                <div class="formula-grid">
+                    <div class="input-group">
+                        <label><span class="badge bg-p">P</span> Potencia (N)</label>
+                        <input type="number" id="val-P" value="50" min="0" step="any" oninput="updateSimulation()">
+                    </div>
+                    <div class="input-group">
+                        <label><span class="badge bg-d">d</span> Distancia P al Fulcro (m)</label>
+                        <input type="number" id="val-d" value="3" min="0" step="any" oninput="updateSimulation()">
+                    </div>
+                    <div class="input-group">
+                        <label><span class="badge bg-r-val">R</span> Resistencia (N)</label>
+                        <input type="number" id="val-R" value="150" min="0" step="any" oninput="updateSimulation()">
+                    </div>
+                    <div class="input-group">
+                        <label><span class="badge bg-r-dist">r</span> Distancia R al Fulcro (m)</label>
+                        <input type="number" id="val-r" value="1" disabled style="background-color: #e2e8f0;" oninput="updateSimulation()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>📐 3. Esquema Visual y Fuerzas</h2>
+            <div class="canvas-container">
+                <canvas id="leverCanvas" width="500" height="260"></canvas>
+            </div>
+
+            <div class="math-box" id="despeje-container">
+                <div class="math-title">🔍 Despeje Matemático Paso a Paso:</div>
+                <div id="math-steps" style="line-height: 1.5; font-size: 14px;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentGrade = 1;
+        const canvas = document.getElementById('leverCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function setGrade(grade) {
+            currentGrade = grade;
+            document.getElementById('btn-g1').classList.toggle('active', grade === 1);
+            document.getElementById('btn-g2').classList.toggle('active', grade === 2);
+            document.getElementById('btn-g3').classList.toggle('active', grade === 3);
+            updateSimulation();
+        }
+
+        function handleUnknownChange() {
+            const unknown = document.getElementById('unknown-selector').value;
+            const fields = ['P', 'd', 'R', 'r'];
+            
+            fields.forEach(f => {
+                const input = document.getElementById(`val-${f}`);
+                if (f === unknown) {
+                    input.disabled = true;
+                    input.style.backgroundColor = '#e2e8f0';
+                    input.value = "?";
+                } else {
+                    input.disabled = false;
+                    input.style.backgroundColor = '#ffffff';
+                    if (input.value === "?") input.value = "10";
+                }
+            });
+            updateSimulation();
+        }
+
+        // FUNCIÓN DE LECTURA SEGURA: Evita que un casillero vacío rompa la app
+        function getSafeValue(id) {
+            const element = document.getElementById(id);
+            if (!element || element.value === "?") return null;
+            const parsed = parseFloat(element.value);
+            return isNaN(parsed) ? 0 : parsed; // Si es un texto raro o vacío, devuelve 0 de manera segura
+        }
+
+        function updateSimulation() {
+            const unknown = document.getElementById('unknown-selector').value;
+            
+            let P = unknown === 'P' ? null : getSafeValue('val-P');
+            let d = unknown === 'd' ? null : getSafeValue('val-d');
+            let R = unknown === 'R' ? null : getSafeValue('val-R');
+            let r = unknown === 'r' ? null : getSafeValue('val-r');
+
+            let solvedValue = 0;
+            let stepsHtml = "";
+
+            // Evitar divisiones por cero en el despeje matemático
+            if (unknown === 'P') {
+                solvedValue = d !== 0 ? (R * r) / d : 0; P = solvedValue;
+                stepsHtml = `Fórmula Base: P . d = R . r<br>Despejamos P: P = (R . r) / d<br>Reemplazamos: P = (${R} N . ${r} m) / ${d} m<br><strong>➔ P = ${solvedValue.toFixed(2)} N</strong>`;
+            } else if (unknown === 'd') {
+                solvedValue = P !== 0 ? (R * r) / P : 0; d = solvedValue;
+                stepsHtml = `Fórmula Base: P . d = R . r<br>Despejamos d: d = (R . r) / P<br>Reemplazamos: d = (${R} N . ${r} m) / ${P} N<br><strong>➔ d = ${solvedValue.toFixed(2)} m</strong>`;
+            } else if (unknown === 'R') {
+                solvedValue = r !== 0 ? (P * d) / r : 0; R = solvedValue;
+                stepsHtml = `Fórmula Base: P . d = R . r<br>Despejamos R: R = (P . d) / r<br>Reemplazamos: R = (${P} N . ${d} m) / ${r} m<br><strong>➔ R = ${solvedValue.toFixed(2)} N</strong>`;
+            } else if (unknown === 'r') {
+                solvedValue = R !== 0 ? (P * d) / R : 0; r = solvedValue;
+                stepsHtml = `Fórmula Base: P . d = R . r<br>Despejamos r: r = (P . d) / R<br>Reemplazamos: r = (${P} N . ${d} m) / ${R} N<br><strong>➔ r = ${solvedValue.toFixed(2)} m</strong>`;
+            }
+
+            document.getElementById('math-steps').innerHTML = stepsHtml;
+            drawLeverGraph(P, d, R, r);
+        }
+
+        function drawLeverGraph(P, d, R, r) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const barY = 120;
+            const barLeft = 50;
+            const barRight = 450;
+            const barWidth = barRight - barLeft;
+
+            // Dibujar barra rígida gris
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 14;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(barLeft, barY);
+            ctx.lineTo(barRight, barY);
+            ctx.stroke();
+
+            let fulcroX, potenciaX, resistenciaX;
+
+            if (currentGrade === 1) {
+                fulcroX = barLeft + barWidth * 0.5;
+                potenciaX = barLeft + 30;
+                resistenciaX = barRight - 30;
+            } else if (currentGrade === 2) {
+                fulcroX = barLeft + 20;
+                resistenciaX = barLeft + barWidth * 0.4;
+                potenciaX = barRight - 30;
+            } else {
+                fulcroX = barLeft + 20;
+                potenciaX = barLeft + barWidth * 0.4;
+                resistenciaX = barRight - 30;
+            }
+
+            // Normalizar valores para evitar que explote el dibujo si ponen números gigantescos
+            const safeP = P === null ? 0 : P;
+            const safeD = d === null ? 0 : d;
+            const safeR = R === null ? 0 : R;
+            const safeRdist = r === null ? 0 : r;
+
+            // 1. FULCRO
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.moveTo(fulcroX, barY + 5);
+            ctx.lineTo(fulcroX - 14, barY + 28);
+            ctx.lineTo(fulcroX + 14, barY + 28);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#475569';
+            ctx.font = 'bold 10px Arial';
+            ctx.fillText("FULCRO", fulcroX - 22, barY + 40);
+
+            // 2. FLECHA POTENCIA
+            ctx.strokeStyle = '#3b82f6';
+            ctx.fillStyle = '#3b82f6';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(potenciaX, barY);
+            ctx.lineTo(potenciaX, barY - 45);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(potenciaX - 7, barY - 45);
+            ctx.lineTo(potenciaX + 7, barY - 45);
+            ctx.lineTo(potenciaX, barY - 55);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText(`P = ${P !== null ? safeP.toFixed(1) : '?'} N`, potenciaX - 25, barY - 62);
+
+            // 3. RESISTENCIA
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(resistenciaX - 18, barY - 35, 36, 30);
+            ctx.strokeStyle = '#b91c1c';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(resistenciaX - 18, barY - 35, 36, 30);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText("R", resistenciaX - 4, barY - 15);
+
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText(`R = ${R !== null ? safeR.toFixed(1) : '?'} N`, resistenciaX - 25, barY - 45);
+
+            // COTAS METRICAS
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+
+            ctx.strokeStyle = '#10b981';
+            ctx.beginPath(); ctx.moveTo(fulcroX, barY + 28); ctx.lineTo(fulcroX, barY + 115); ctx.stroke();
+
+            ctx.strokeStyle = '#3b82f6';
+            ctx.beginPath(); ctx.moveTo(potenciaX, barY); ctx.lineTo(potenciaX, barY + 80); ctx.stroke();
+
+            ctx.strokeStyle = '#ef4444';
+            ctx.beginPath(); ctx.moveTo(resistenciaX, barY); ctx.lineTo(resistenciaX, barY + 115); ctx.stroke();
+
+            ctx.setLineDash([]);
+
+            // Línea cota d
+            ctx.strokeStyle = '#3b82f6';
+            ctx.fillStyle = '#3b82f6';
+            ctx.beginPath();
+            ctx.moveTo(potenciaX, barY + 70);
+            ctx.lineTo(fulcroX, barY + 70);
+            ctx.stroke();
+            drawArrowhead(potenciaX, barY + 70, potenciaX < fulcroX ? 0 : Math.PI);
+            drawArrowhead(fulcroX, barY + 70, potenciaX < fulcroX ? Math.PI : 0);
+            ctx.font = 'italic bold 11px Arial';
+            ctx.fillText(`d = ${d !== null ? safeD.toFixed(1) : '?'} m`, (potenciaX + fulcroX)/2 - 25, barY + 65);
+
+            // Línea cota r
+            ctx.strokeStyle = '#ef4444';
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(resistenciaX, barY + 105);
+            ctx.lineTo(fulcroX, barY + 105);
+            ctx.stroke();
+            drawArrowhead(resistenciaX, barY + 105, resistenciaX < fulcroX ? 0 : Math.PI);
+            drawArrowhead(fulcroX, barY + 105, resistenciaX < fulcroX ? Math.PI : 0);
+            ctx.font = 'italic bold 11px Arial';
+            ctx.fillText(`r = ${r !== null ? safeRdist.toFixed(1) : '?'} m`, (resistenciaX + fulcroX)/2 - 25, barY + 100);
+        }
+
+        function drawArrowhead(x, y, angle) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(5, -3);
+            ctx.lineTo(5, 3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        handleUnknownChange();
+    </script>
+</body>
+</html>
